@@ -13,6 +13,8 @@
 #include <sstream>
 #include <vector>
 #include <signal.h>
+#include <cstring> //strcpy
+#include <algorithm> //find
 
 using namespace std;
 
