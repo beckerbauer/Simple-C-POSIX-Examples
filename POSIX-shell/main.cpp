@@ -1,4 +1,13 @@
-#include <iostream>x
+/**
+ * @file main.cpp
+ * @brief A simple shell program that demonstrates the usage of C-POSIX library.
+ * @date 2023-03-03
+ * @version 1.0
+ *
+ * @author github.com/beckerbauer
+ */
+
+#include <iostream>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sstream>
@@ -10,12 +19,20 @@ using namespace std;
 vector<int> pidList;
 int currentPID;
 
+/**
+ * Handles the SIGSTP signal by printing a message with the current process ID and stopping the current process.
+ * @param signum The signal number to handle (should be SIGSTP).
+ */
 void SIGSTOP_handler(int signum){
     cout << "[SIGSTP: pid " << currentPID << "]"<< endl;
     kill(currentPID, SIGTSTP);
     currentPID = -2;
 }
 
+/**
+ * Handles the SIGCONT signal by printing a message with the current process ID and continuing
+ * @param signum The signal number to handle (should be SIGCONT).
+ */
 void SIGCONT_handler(int signum){
     cout << "continuation of: " << signum << endl;
     if((pidList.end()) != (find(pidList.begin(), pidList.end(), signum))) {
@@ -29,6 +46,10 @@ void SIGCONT_handler(int signum){
     }
 }
 
+/**
+ * Handles the SIGCHLD signal by checking for any child processes that have terminated and removing them from the PID list.
+ * @param signum The signal number to handle (should be SIGCHLD)
+ */
 void SIGCHILD_handler(int signum){
     pid_t childpid;
     int status;
@@ -36,35 +57,35 @@ void SIGCHILD_handler(int signum){
     for(int l=0; l < pidList.size(); l++){
         childpid = waitpid(pidList[l], &status, WNOHANG);
         if((childpid>0) && (WIFEXITED(status))){
-            cout << "Prozess Nr. " << childpid << " wurde beendet" << endl;
+            cout << "Prozess Nr. " << childpid << " was terminated" << endl;
             pidList.erase(pidList.begin()+l);
         }
     }
 }
 
 int main() {
-    bool weiter = true;
+    bool continueBool = true;
     while (true)
     {
-        string eingabe = "";
+        string userArg;
         cout << "myshell> ";
-        getline(cin, eingabe);
+        getline(cin, userArg);
 
-        if (eingabe == "logout") {
+        if (userArg == "logout") {
             if(pidList.empty()){
                 while (true) {
-                cout << "Wirklich beenden? [y/n]: ";
-                cin >> eingabe;
-                if (eingabe == "y") {
-                    weiter = false;
+                cout << "Do you really want to logout? [y/n]: ";
+                cin >> userArg;
+                if (userArg == "y") {
+                    continueBool = false;
                     break;
-                } else if (eingabe == "n") {
+                } else if (userArg == "n") {
                     break;
                     }                
                 }
             } else if (!(pidList.empty())) {
-                cout << "Logout nicht möglich, es laufen noch Prozesse im Hintergrund "
-                << "mit den PIDs: ";
+                cout << "Logout not possible, there are processes in the background "
+                << "with the PIDs: ";
                 for(int j=0; j < pidList.size(); j++){
                     cout << pidList[j];
                     if(j < pidList.size()-1){
@@ -75,21 +96,21 @@ int main() {
             }
         }
 
-        if (weiter == false) {
+        if (continueBool == false) {
             break;
         }
 
-        // Eingabe verarbeiten und Argumente auslesen
+        // Take in arguments and read instructions
         int options = WUNTRACED;
         char** argumente = new char*[10];
  
-        istringstream eingabestream(eingabe);
+        istringstream userArgStream(userArg);
         string arg;
         int i=0;
         
         bool stopBool = false;
         bool contBool = false;
-        while(eingabestream >> arg) // trennt nach Leerzeichen
+        while(userArgStream >> arg) // splits with space
         {
             if(stopBool == true){
                 int temp = stoi(arg);
@@ -134,7 +155,7 @@ int main() {
             setpgid(0, getpid());
             int err = execvp(argumente[0], argumente);
             if (err == -1) {
-                //cout << "Fehler\n";
+                cerr << "Error";
             }
             return 0;
         } else {
@@ -143,8 +164,8 @@ int main() {
             if (options == WNOHANG) {
                 pidList.push_back(pid);
             } 
-            // Ausgabe Liste Hintergrundprozesse
-            cout << "[Hintergrund: ";
+            // Outpout of background-processes
+            cout << "[Background: ";
             for(auto & elem : pidList)
             {
                 cout << elem <<", ";
