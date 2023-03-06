@@ -13,8 +13,8 @@
 #include <sstream>
 #include <vector>
 #include <signal.h>
-#include <cstring> //strcpy
-#include <algorithm> //find
+#include <cstring>
+#include <algorithm>
 
 using namespace std;
 
@@ -176,7 +176,6 @@ int main() {
                 cout << elem <<", ";
             }
             cout << "]\n";
-
             waitpid(pid, 0, options);
         }
     }
